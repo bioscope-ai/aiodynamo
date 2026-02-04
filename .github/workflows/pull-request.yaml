@@ -44,4 +44,4 @@ jobs:
         run: |
           uv run python -c "from aiodynamo.client import Client; print('Client imported successfully')"
           uv run python -c "from aiodynamo.models import KeySchema, KeySpec, KeyType; print('Models imported successfully')"
-          uv run python -c "from aiodynamo.expressions import MultiHashKey, MultiRangeKey; print('Multi-key expressions imported successfully')"
+          uv run python -c "from aiodynamo.expressions import MultiHashKey, MultiHashAndRangeKeyCondition; print('Multi-key expressions imported successfully')"
