@@ -6,17 +6,13 @@ import configparser
 import datetime
 import json
 import os
+from collections.abc import Callable, Coroutine, Sequence
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
 from typing import (
-    Callable,
-    Coroutine,
     Generic,
-    Optional,
-    Sequence,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -31,7 +27,7 @@ from .utils import logger, parse_amazon_timestamp
 class Key:
     id: str
     secret: str = field(repr=False)
-    token: Optional[str] = field(repr=False, default=None)
+    token: str | None = field(repr=False, default=None)
 
 
 class Credentials(metaclass=abc.ABCMeta):
@@ -51,7 +47,7 @@ class Credentials(metaclass=abc.ABCMeta):
         )
 
     @abc.abstractmethod
-    async def get_key(self, http: HttpImplementation) -> Optional[Key]:
+    async def get_key(self, http: HttpImplementation) -> Key | None:
         """
         Return a Key if one could be found.
         """
@@ -83,9 +79,9 @@ class StaticCredentials(Credentials):
     Static credentials provided in Python.
     """
 
-    key: Optional[Key]
+    key: Key | None
 
-    async def get_key(self, http: HttpImplementation) -> Optional[Key]:
+    async def get_key(self, http: HttpImplementation) -> Key | None:
         return self.key
 
     def invalidate(self) -> bool:
@@ -113,7 +109,7 @@ class ChainCredentials(Credentials):
         ]
         self._chosen = None
 
-    async def get_key(self, http: HttpImplementation) -> Optional[Key]:
+    async def get_key(self, http: HttpImplementation) -> Key | None:
         if self._chosen is not None:
             return await self._chosen.get_key(http)
         for candidate in self._candidates:
@@ -142,7 +138,7 @@ class EnvironmentCredentials(Credentials):
     Loads the credentials from the environment.
     """
 
-    key: Optional[Key]
+    key: Key | None
 
     def __init__(self) -> None:
         try:
@@ -154,7 +150,7 @@ class EnvironmentCredentials(Credentials):
         except KeyError:
             self.key = None
 
-    async def get_key(self, http: HttpImplementation) -> Optional[Key]:
+    async def get_key(self, http: HttpImplementation) -> Key | None:
         return self.key
 
     def invalidate(self) -> bool:
@@ -170,13 +166,13 @@ class FileCredentials(Credentials):
     Loads the credentials from an AWS credentials file
     """
 
-    key: Optional[Key]
+    key: Key | None
 
     def __init__(
         self,
         *,
-        path: Optional[Path] = None,
-        profile_name: Optional[str] = None,
+        path: Path | None = None,
+        profile_name: str | None = None,
     ) -> None:
         if profile_name is None:
             profile_name = cast(str, os.environ.get("AWS_PROFILE", "default"))
@@ -212,7 +208,7 @@ class FileCredentials(Credentials):
                 "Profile %r in %r does not contain credentials", profile_name, path
             )
 
-    async def get_key(self, http: HttpImplementation) -> Optional[Key]:
+    async def get_key(self, http: HttpImplementation) -> Key | None:
         return self.key
 
     def invalidate(self) -> bool:
@@ -248,8 +244,8 @@ class Refreshable(Generic[T]):
     name: str
     should_refresh: Callable[[T], Refresh]
     do_refresh: Callable[[HttpImplementation], Coroutine[None, None, T]]
-    _active_refresh_task: Optional[asyncio.Task[T]] = None
-    _current: Union[_Unset, T] = _UNSET
+    _active_refresh_task: asyncio.Task[T] | None = None
+    _current: _Unset | T = _UNSET
 
     async def get(self, http: HttpImplementation) -> T:
         refresh = self._check_refresh()
@@ -302,7 +298,7 @@ class Metadata:
 
 
 def check_refresh(expires: datetime.datetime) -> Refresh:
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     if now >= expires:
         return Refresh.required
     diff = expires - now
@@ -325,7 +321,7 @@ class MetadataCredentials(Credentials, metaclass=abc.ABCMeta):
             self.fetch_metadata,
         )
 
-    async def get_key(self, http: HttpImplementation) -> Optional[Key]:
+    async def get_key(self, http: HttpImplementation) -> Key | None:
         if self.is_disabled():
             logger.debug("%r is disabled", self)
             return None
@@ -338,7 +334,7 @@ class MetadataCredentials(Credentials, metaclass=abc.ABCMeta):
         return True
 
 
-def and_then(thing: Optional[T], mapper: Callable[[T], U]) -> Optional[U]:
+def and_then(thing: T | None, mapper: Callable[[T], U]) -> U | None:
     if thing is not None:
         return mapper(thing)
     return thing
@@ -354,24 +350,24 @@ class ContainerMetadataCredentials(MetadataCredentials):
     timeout: Timeout = 2
     max_attempts: int = 3
     base_url: URL = URL("http://169.254.170.2")
-    relative_uri: Optional[str] = field(
+    relative_uri: str | None = field(
         default_factory=lambda: os.environ.get(
             "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", None
         )
     )
-    full_uri: Optional[URL] = field(
+    full_uri: URL | None = field(
         default_factory=lambda: and_then(
             os.environ.get("AWS_CONTAINER_CREDENTIALS_FULL_URI", None), URL
         )
     )
-    auth_token: Optional[str] = field(
+    auth_token: str | None = field(
         default_factory=lambda: os.environ.get(
             "AWS_CONTAINER_AUTHORIZATION_TOKEN", None
         )
     )
 
     @property
-    def url(self) -> Optional[URL]:
+    def url(self) -> URL | None:
         if self.relative_uri is not None:
             return self.base_url.with_path(self.relative_uri)
         elif self.full_uri is not None:
@@ -417,6 +413,7 @@ class AuthToken:
 MAX_IMDSV2_AUTH_TOKEN_SESSION_DURATION = 6 * 60 * 60
 DEFAULT_IMDSV2_AUTH_TOKEN_SESSION_DURATION = MAX_IMDSV2_AUTH_TOKEN_SESSION_DURATION
 
+
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
 @dataclass
 class InstanceMetadataCredentialsV2(MetadataCredentials):
@@ -429,10 +426,9 @@ class InstanceMetadataCredentialsV2(MetadataCredentials):
     max_attempts: int = 1
     base_url: URL = URL("http://169.254.169.254")
     disabled: bool = field(
-        default_factory=lambda: os.environ.get(
-            "AWS_EC2_METADATA_DISABLED", "false"
-        ).lower()
-        == "true"
+        default_factory=lambda: (
+            os.environ.get("AWS_EC2_METADATA_DISABLED", "false").lower() == "true"
+        )
     )
     token_session_duration_seconds: int = DEFAULT_IMDSV2_AUTH_TOKEN_SESSION_DURATION
     auth_token: Refreshable[AuthToken] = field(init=False)
@@ -445,7 +441,7 @@ class InstanceMetadataCredentialsV2(MetadataCredentials):
                 f"{MAX_IMDSV2_AUTH_TOKEN_SESSION_DURATION}, "
                 f"got {self.token_session_duration_seconds}"
             )
-        self.auth_token: Refreshable[AuthToken] = Refreshable(
+        self.auth_token = Refreshable(
             "imdsv2-token-refresher", AuthToken.check_refresh, self._fetch_token
         )
 
@@ -494,7 +490,7 @@ class InstanceMetadataCredentialsV2(MetadataCredentials):
         http: HttpImplementation,
     ) -> AuthToken:
         token_url = self.base_url.with_path("/latest/api/token/")
-        expires = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+        expires = datetime.datetime.now(datetime.UTC) + datetime.timedelta(
             seconds=self.token_session_duration_seconds
         )
         token = (
@@ -527,10 +523,9 @@ class InstanceMetadataCredentialsV1(MetadataCredentials):
     max_attempts: int = 1
     base_url: URL = URL("http://169.254.169.254")
     disabled: bool = field(
-        default_factory=lambda: os.environ.get(
-            "AWS_EC2_METADATA_DISABLED", "false"
-        ).lower()
-        == "true"
+        default_factory=lambda: (
+            os.environ.get("AWS_EC2_METADATA_DISABLED", "false").lower() == "true"
+        )
     )
 
     def is_disabled(self) -> bool:
@@ -583,11 +578,11 @@ async def fetch_with_retry_and_timeout(
     timeout: Timeout,
     request: Request,
 ) -> bytes:
-    exception: Optional[Exception] = None
+    exception: Exception | None = None
     for _ in range(max_attempts):
         try:
             response = await asyncio.wait_for(http(request), timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.debug("timed out talking to metadata service")
             continue
         except RequestFailed as exc:

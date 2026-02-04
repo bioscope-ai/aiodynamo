@@ -1,17 +1,11 @@
 import asyncio
 import os
 import uuid
+from collections.abc import AsyncGenerator, Awaitable, Callable, Generator, Iterable
 from dataclasses import dataclass
 from enum import Enum
 from typing import (
     Any,
-    AsyncGenerator,
-    Awaitable,
-    Callable,
-    Generator,
-    Iterable,
-    Optional,
-    Union,
     cast,
 )
 
@@ -38,7 +32,7 @@ from aiodynamo.models import (
 from aiodynamo.operations import ConditionCheck
 from aiodynamo.types import TableName
 
-TableFactory = Callable[[Union[Throughput, PayPerRequest]], Awaitable[str]]
+TableFactory = Callable[[Throughput | PayPerRequest], Awaitable[str]]
 
 
 class Flavor(Enum):
@@ -52,7 +46,7 @@ class Flavor(Enum):
 class Implementation:
     name: str
     flavor: Flavor
-    endpoint: Optional[URL]
+    endpoint: URL | None
 
 
 def find_dynamo_implementations() -> Iterable[Implementation]:
@@ -125,7 +119,7 @@ async def supports_transactions(client: Client, table: TableName) -> None:
 
 
 @pytest.fixture(scope="session")
-def endpoint(dynamodb_implementation: Implementation) -> Optional[URL]:
+def endpoint(dynamodb_implementation: Implementation) -> URL | None:
     return dynamodb_implementation.endpoint
 
 
@@ -135,9 +129,7 @@ def region() -> str:
 
 
 @pytest.fixture()
-def client(
-    http: HttpImplementation, endpoint: URL, region: str
-) -> Generator[Client, None, None]:
+def client(http: HttpImplementation, endpoint: URL, region: str) -> Generator[Client]:
     yield Client(
         http,
         Credentials.auto(),
@@ -163,7 +155,7 @@ def consistent_read(request: SubRequest) -> bool:
 async def _make_table(
     client: Client,
     table_name_prefix: str,
-    throughput: Union[Throughput, PayPerRequest],
+    throughput: Throughput | PayPerRequest,
     wait_config: RetryConfig,
 ) -> str:
     name = table_name_prefix + str(uuid.uuid4())
@@ -187,9 +179,7 @@ async def table_factory(
 
 
 @pytest.fixture
-async def table(
-    client: Client, table_factory: TableFactory
-) -> AsyncGenerator[str, None]:
+async def table(client: Client, table_factory: TableFactory) -> AsyncGenerator[str]:
     name = await table_factory(Throughput(5, 5))
     try:
         yield name
@@ -204,7 +194,7 @@ def prefilled_table(
     table_name_prefix: str,
     wait_config: RetryConfig,
     session_event_loop: asyncio.BaseEventLoop,
-) -> Generator[str, None, None]:
+) -> Generator[str]:
     """
     Event loop is function scoped, so we can't use pytest-asyncio here.
     """
@@ -242,7 +232,7 @@ def prefilled_table(
 @pytest.fixture
 async def pay_per_request_table(
     client: Client, table_factory: TableFactory
-) -> AsyncGenerator[str, None]:
+) -> AsyncGenerator[str]:
     name = await table_factory(PayPerRequest())
     try:
         yield name

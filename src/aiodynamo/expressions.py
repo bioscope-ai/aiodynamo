@@ -1,31 +1,20 @@
 from __future__ import annotations
 
 import abc
+import builtins
 import decimal
+from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from itertools import chain, count
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generator,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Union,
-)
+from typing import Any
 
 from .errors import CannotAddToNestedField
 from .types import AttributeType, Numeric, ParametersDict
 from .utils import deparametetrize, low_level_serialize
 
-_ParametersCache = Dict[Tuple[Any, Any], str]
+_ParametersCache = dict[tuple[Any, Any], str]
 
-Addable = Union[Numeric, Set[bytes], Set[str], Set[Numeric]]
+Addable = Numeric | set[bytes] | set[str] | set[Numeric]
 
 
 class ProjectionExpression(metaclass=abc.ABCMeta):
@@ -41,7 +30,7 @@ class ProjectionExpression(metaclass=abc.ABCMeta):
 @dataclass(frozen=True)
 class KeyPath:
     root: str
-    parts: Sequence[Union[str, int]] = ()
+    parts: Sequence[str | int] = ()
 
 
 class F(ProjectionExpression):
@@ -65,7 +54,7 @@ class F(ProjectionExpression):
 
     path: KeyPath
 
-    def __init__(self, root: str, *path: Union[str, int]):
+    def __init__(self, root: str, *path: str | int):
         self.path = KeyPath(root, path)
 
     def __repr__(self) -> str:
@@ -122,9 +111,7 @@ class F(ProjectionExpression):
         """
         return Between(self, low, high)
 
-    def contains(
-        self, value: Union[str, bytes, int, float, decimal.Decimal]
-    ) -> Condition:
+    def contains(self, value: str | bytes | int | float | decimal.Decimal) -> Condition:
         """
         Checks if a set or list contains a certain value.
         If a string or bytes object is used as a value, they must not be empty.
@@ -204,7 +191,7 @@ class F(ProjectionExpression):
         """
         return UpdateExpression(set_updates=[(self, Modify(diff))])
 
-    def append(self, value: List[Any]) -> UpdateExpression:
+    def append(self, value: list[Any]) -> UpdateExpression:
         """
         Add items to a list field. Note that the value passed in should be a
         list, not an individual item.
@@ -229,7 +216,7 @@ class F(ProjectionExpression):
             raise CannotAddToNestedField()
         return UpdateExpression(add=[(self, value)])
 
-    def delete(self, value: Set[Any]) -> UpdateExpression:
+    def delete(self, value: builtins.set[Any]) -> UpdateExpression:
         """
         Deletes all items in the set provided from the set stored in this field.
         """
@@ -299,14 +286,14 @@ class RangeKey:
 
 class Parameters:
     def __init__(self) -> None:
-        self.names: Dict[str, str] = {}
-        self.values: Dict[str, Dict[str, Any]] = {}
+        self.names: dict[str, str] = {}
+        self.values: dict[str, dict[str, Any]] = {}
         self.names_gen: Iterator[int] = count()
         self.values_gen: Iterator[int] = count()
         self.names_cache: _ParametersCache = {}
         self.values_cache: _ParametersCache = {}
 
-    def encode_name(self, name: Union[str, int]) -> str:
+    def encode_name(self, name: str | int) -> str:
         return self._encode(
             "#n", name, self.names, self.names_gen, self.names_cache, name
         )
@@ -349,7 +336,7 @@ class Parameters:
         self,
         prefix: str,
         thing: Any,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         index_gen: Iterator[int],
         cache: _ParametersCache,
         cache_key: Any,
@@ -485,7 +472,7 @@ class Between(Condition):
 @dataclass(frozen=True)
 class Contains(Condition):
     field: F
-    value: Union[str, bytes, int, float, decimal.Decimal]
+    value: str | bytes | int | float | decimal.Decimal
 
     def encode(self, params: Parameters) -> str:
         return f"contains({params.encode_path(self.field.path)}, {params.encode_value(self.value)})"
@@ -601,7 +588,7 @@ class Modify(SetAction):
 
 @dataclass(frozen=True)
 class Append(SetAction):
-    values: List[Any]
+    values: list[Any]
 
     def encode(self, params: Parameters, field: F) -> str:
         return f"list_append({params.encode_path(field.path)}, {params.encode_value(self.values)})"
@@ -609,10 +596,10 @@ class Append(SetAction):
 
 @dataclass(frozen=True)
 class UpdateExpression:
-    set_updates: List[Tuple[F, SetAction]] = field(default_factory=list)
-    remove: Set[F] = field(default_factory=set)
-    add: List[Tuple[F, Addable]] = field(default_factory=list)
-    delete: List[Tuple[F, Union[Set[bytes], Set[Numeric], Set[str]]]] = field(
+    set_updates: list[tuple[F, SetAction]] = field(default_factory=list)
+    remove: set[F] = field(default_factory=set)
+    add: list[tuple[F, Addable]] = field(default_factory=list)
+    delete: list[tuple[F, set[bytes] | set[Numeric] | set[str]]] = field(
         default_factory=list
     )
 
@@ -624,7 +611,7 @@ class UpdateExpression:
             delete=[*self.delete, *other.delete],
         )
 
-    def encode(self, params: Parameters) -> Optional[str]:
+    def encode(self, params: Parameters) -> str | None:
         bits = []
         if self.set_updates:
             set_expr = ", ".join(
@@ -653,7 +640,7 @@ class UpdateExpression:
             return " ".join(bits)
         return None
 
-    def debug(self, numeric_type: Callable[[str], Any] = float) -> Optional[str]:
+    def debug(self, numeric_type: Callable[[str], Any] = float) -> str | None:
         """
         Format the expression as a string for debugging.
         """
@@ -666,7 +653,7 @@ class UpdateExpression:
 
 @dataclass(frozen=True)
 class FieldList(ProjectionExpression):
-    fields: List[F]
+    fields: list[F]
 
     def __and__(self, field: F) -> ProjectionExpression:
         return FieldList(self.fields + [field])
@@ -696,7 +683,7 @@ class SubConditions:
     def extending(self, values: Iterable[Condition]) -> SubConditions:
         return SubConditions(self.first, self.second, (*self.rest, *values))
 
-    def __iter__(self) -> Generator[Condition, None, None]:
+    def __iter__(self) -> Generator[Condition]:
         yield self.first
         yield self.second
         yield from self.rest

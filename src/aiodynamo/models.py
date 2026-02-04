@@ -5,18 +5,12 @@ import asyncio
 import datetime
 import random
 import time
+from collections.abc import AsyncIterable, Iterable, Iterator
 from dataclasses import dataclass
 from enum import Enum, unique
 from itertools import count
 from typing import (
     Any,
-    AsyncIterable,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Union,
     cast,
 )
 
@@ -73,7 +67,7 @@ class PayPerRequest:
         return {"BillingMode": PayPerRequest.MODE}
 
 
-ThroughputType = Union[Throughput, PayPerRequest]
+ThroughputType = Throughput | PayPerRequest
 
 
 class KeyType(Enum):
@@ -91,7 +85,7 @@ class KeySpec:
 @dataclass(frozen=True)
 class KeySchema:
     hash_key: KeySpec
-    range_key: Optional[KeySpec] = None
+    range_key: KeySpec | None = None
 
     def __iter__(self) -> Iterator[KeySpec]:
         yield self.hash_key
@@ -99,10 +93,10 @@ class KeySchema:
         if self.range_key:
             yield self.range_key
 
-    def to_attributes(self) -> Dict[str, str]:
+    def to_attributes(self) -> dict[str, str]:
         return {key.name: key.type.value for key in self}
 
-    def encode(self) -> List[EncodedKeySchema]:
+    def encode(self) -> list[EncodedKeySchema]:
         return [
             {"AttributeName": key.name, "KeyType": key_type}
             for key, key_type in zip(self, ["HASH", "RANGE"])
@@ -118,7 +112,7 @@ class ProjectionType(Enum):
 @dataclass(frozen=True)
 class Projection:
     type: ProjectionType
-    attrs: Optional[List[str]] = None
+    attrs: list[str] | None = None
 
     def encode(self) -> EncodedProjection:
         encoded: EncodedProjection = {"ProjectionType": self.type.value}
@@ -143,7 +137,7 @@ class LocalSecondaryIndex:
 
 @dataclass(frozen=True)
 class GlobalSecondaryIndex(LocalSecondaryIndex):
-    throughput: Optional[Throughput]
+    throughput: Throughput | None
 
     def encode(self) -> EncodedGlobalSecondaryIndex:
         # mypy really does not like an if/else assignment where the branches have
@@ -199,16 +193,16 @@ class TableStatus(Enum):
 
 @dataclass(frozen=True)
 class TableDescription:
-    attributes: Optional[Dict[str, KeyType]]
-    created: Optional[datetime.datetime]
-    item_count: Optional[int]
-    key_schema: Optional[KeySchema]
-    throughput: Optional[ThroughputType]
+    attributes: dict[str, KeyType] | None
+    created: datetime.datetime | None
+    item_count: int | None
+    key_schema: KeySchema | None
+    throughput: ThroughputType | None
     status: TableStatus
 
     @classmethod
-    def from_response(cls, description: Dict[str, Any]) -> "TableDescription":
-        attributes: Optional[Dict[str, KeyType]]
+    def from_response(cls, description: dict[str, Any]) -> TableDescription:
+        attributes: dict[str, KeyType] | None
         if "AttributeDefinitions" in description:
             attributes = {
                 attribute["AttributeName"]: KeyType(attribute["AttributeType"])
@@ -216,14 +210,14 @@ class TableDescription:
             }
         else:
             attributes = None
-        creation_time: Optional[datetime.datetime]
+        creation_time: datetime.datetime | None
         if "CreationDateTime" in description:
             creation_time = datetime.datetime.fromtimestamp(
-                description["CreationDateTime"], datetime.timezone.utc
+                description["CreationDateTime"], datetime.UTC
             )
         else:
             creation_time = None
-        key_schema: Optional[KeySchema]
+        key_schema: KeySchema | None
         if attributes and "KeySchema" in description:
             key_schema = KeySchema(
                 *[
@@ -235,7 +229,7 @@ class TableDescription:
             )
         else:
             key_schema = None
-        throughput: Optional[ThroughputType]
+        throughput: ThroughputType | None
         if (
             "BillingModeSummary" in description
             and description["BillingModeSummary"]["BillingMode"] == PayPerRequest.MODE
@@ -346,8 +340,8 @@ class ExponentialBackoffRetry(RetryConfig):
 
 @dataclass(frozen=True)
 class Page:
-    items: List[Item]
-    last_evaluated_key: Optional[Dict[str, Any]]
+    items: list[Item]
+    last_evaluated_key: dict[str, Any] | None
 
     @property
     def is_last_page(self) -> bool:
@@ -356,12 +350,12 @@ class Page:
 
 @dataclass(frozen=True)
 class BatchGetRequest:
-    keys: List[Item]
-    projection: Optional[ProjectionExpression] = None
+    keys: list[Item]
+    projection: ProjectionExpression | None = None
     consistent_read: bool = False
 
-    def to_request_payload(self) -> Dict[str, Any]:
-        payload: Dict[str, Any] = {
+    def to_request_payload(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
             "Keys": [py2dy(key) for key in self.keys],
             "ConsistentRead": self.consistent_read,
         }
@@ -375,17 +369,17 @@ class BatchGetRequest:
 
 @dataclass(frozen=True)
 class BatchGetResponse:
-    items: Dict[TableName, List[Item]]
-    unprocessed_keys: Dict[TableName, List[Item]]
+    items: dict[TableName, list[Item]]
+    unprocessed_keys: dict[TableName, list[Item]]
 
 
 @dataclass(frozen=True)
 class BatchWriteRequest:
-    keys_to_delete: Optional[List[Item]] = None
-    items_to_put: Optional[List[Item]] = None
+    keys_to_delete: list[Item] | None = None
+    items_to_put: list[Item] | None = None
 
-    def to_request_payload(self) -> List[Dict[str, Any]]:
-        payload: List[Dict[str, Any]] = []
+    def to_request_payload(self) -> list[dict[str, Any]]:
+        payload: list[dict[str, Any]] = []
         if self.keys_to_delete:
             payload.extend(
                 {"DeleteRequest": {"Key": py2dy(key)}} for key in self.keys_to_delete
@@ -399,5 +393,5 @@ class BatchWriteRequest:
 
 @dataclass(frozen=True)
 class BatchWriteResult:
-    undeleted_keys: List[Item]
-    unput_items: List[Item]
+    undeleted_keys: list[Item]
+    unput_items: list[Item]

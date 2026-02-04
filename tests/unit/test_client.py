@@ -1,5 +1,5 @@
 import json
-from typing import Any, Type
+from typing import Any
 
 import pytest
 
@@ -32,7 +32,7 @@ def bjson(data: Any) -> bytes:
     ],
 )
 async def test_client_send_request_retryable_errors(
-    status: int, dynamo_error: str, aiodynamo_error: Type[Exception]
+    status: int, dynamo_error: str, aiodynamo_error: type[Exception]
 ) -> None:
     async def http(request: Request) -> Response:
         return Response(

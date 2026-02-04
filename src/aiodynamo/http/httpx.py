@@ -1,6 +1,5 @@
-import asyncio
 from dataclasses import dataclass
-from typing import Dict, cast
+from typing import cast
 
 import httpx
 
@@ -17,11 +16,11 @@ class HTTPX:
                 method=request.method,
                 url=request.url,
                 # httpx is coded with no_implicit_optional=False, we use strict=True
-                headers=cast(Dict[str, str], request.headers),
+                headers=cast(dict[str, str], request.headers),
                 content=cast(bytes, request.body),
             )
             return Response(response.status_code, await response.aread())
         except httpx.TimeoutException:
-            raise asyncio.TimeoutError()
+            raise TimeoutError()
         except httpx.HTTPError as exc:
             raise RequestFailed(exc)

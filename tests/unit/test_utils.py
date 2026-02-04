@@ -1,7 +1,8 @@
 import base64
+from collections.abc import Callable
 from decimal import Decimal
 from functools import partial
-from typing import Any, Callable, Dict
+from typing import Any
 
 import pytest
 from boto3.dynamodb.types import (  # type: ignore[import-untyped]
@@ -65,13 +66,13 @@ class XDistReprFix:
     ],
 )
 def test_numeric_decode(
-    value: Dict[str, Any], numeric_type: NumericTypeConverter, result: Any
+    value: dict[str, Any], numeric_type: NumericTypeConverter, result: Any
 ) -> None:
     assert deserialize(value, numeric_type) == result
 
 
 def test_serde_compatibility() -> None:
-    def generate_item(nest: bool) -> Dict[str, Any]:
+    def generate_item(nest: bool) -> dict[str, Any]:
         item = {
             "hash": {
                 "S": "string",
@@ -101,8 +102,8 @@ def test_serde_compatibility() -> None:
             return base64.b64decode(value)
 
     def deserialize_item(
-        item: Dict[str, Any], deserializer: Callable[[Any], Any]
-    ) -> Dict[str, Any]:
+        item: dict[str, Any], deserializer: Callable[[Any], Any]
+    ) -> dict[str, Any]:
         return {k: deserializer(v) for k, v in item.items()}
 
     fast = deserialize_item(

@@ -3,7 +3,7 @@ import contextlib
 import secrets
 import typing
 from operator import itemgetter
-from typing import Any, List, Type
+from typing import Any
 
 import pytest
 from yarl import URL
@@ -424,7 +424,7 @@ async def test_query_range_key_filters(
     client: Client,
     prefilled_table: TableName,
     range_key: Condition,
-    expected: List[str],
+    expected: list[str],
 ) -> None:
     items = [
         item["r"]
@@ -654,8 +654,8 @@ async def test_batch(client: Client, table: TableName) -> None:
 )
 async def test_transact_write_items_input_validation(
     client: Client,
-    items: List[Put],
-    aiodynamo_error: Type[Exception],
+    items: list[Put],
+    aiodynamo_error: type[Exception],
 ) -> None:
     with pytest.raises(aiodynamo_error):
         await client.transact_write_items(items=items)
@@ -814,8 +814,8 @@ async def test_transact_write_items_multiple_operations(
 )
 async def test_transact_get_items_input_validation(
     client: Client,
-    items: List[Get],
-    aiodynamo_error: Type[Exception],
+    items: list[Get],
+    aiodynamo_error: type[Exception],
 ) -> None:
     with pytest.raises(aiodynamo_error):
         await client.transact_get_items(items=items)

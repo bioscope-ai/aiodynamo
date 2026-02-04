@@ -4,8 +4,9 @@ import datetime
 import hashlib
 import hmac
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Dict, Mapping, Optional
+from typing import Any
 
 from yarl import URL
 
@@ -28,7 +29,7 @@ class Instant:
 
     @classmethod
     def now(cls) -> Instant:
-        return cls(datetime.datetime.now(datetime.timezone.utc))
+        return cls(datetime.datetime.now(datetime.UTC))
 
     @property
     def timestamp(self) -> str:
@@ -42,7 +43,7 @@ class Instant:
 @dataclass(frozen=True)
 class Request:
     url: URL
-    headers: Dict[str, str] = field(repr=False)
+    headers: dict[str, str] = field(repr=False)
     body: bytes
 
 
@@ -59,7 +60,7 @@ def signed_dynamo_request(
     payload: Mapping[str, Any],
     action: str,
     region: str,
-    endpoint: Optional[URL] = None,
+    endpoint: URL | None = None,
 ) -> Request:
     instant = Instant.now()
     endpoint = endpoint or make_default_endpoint(region)
@@ -91,10 +92,7 @@ def signed_dynamo_request(
     credential_scope = f"{instant.date}/{region}/{SERVICE}/aws4_request"
     request_digest = hashlib.sha256(canonical_request.encode("utf-8")).hexdigest()
     string_to_sign = (
-        f"{ALGORITHM}\n"
-        f"{instant.timestamp}\n"
-        f"{credential_scope}\n"
-        f"{request_digest}"
+        f"{ALGORITHM}\n{instant.timestamp}\n{credential_scope}\n{request_digest}"
     )
 
     signing_key = derive_signing_key(key, instant, region)

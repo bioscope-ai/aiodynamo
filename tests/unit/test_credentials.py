@@ -1,8 +1,8 @@
 import asyncio
 import datetime
+from collections.abc import AsyncGenerator
 from pathlib import Path
 from textwrap import dedent
-from typing import AsyncGenerator, Optional, Type, Union
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -34,8 +34,8 @@ pytestmark = [pytest.mark.usefixtures("fs")]
 class InstanceMetadataServer:
     def __init__(self) -> None:
         self.port = 0
-        self.role: Optional[str] = None
-        self.metadata: Optional[Metadata] = None
+        self.role: str | None = None
+        self.metadata: Metadata | None = None
         self.calls = 0
 
     async def token_handler(self, request: web.Request) -> web.Response:
@@ -69,7 +69,7 @@ class InstanceMetadataServer:
 
 
 @pytest.fixture
-async def instance_metadata_server() -> AsyncGenerator[InstanceMetadataServer, None]:
+async def instance_metadata_server() -> AsyncGenerator[InstanceMetadataServer]:
     ims = InstanceMetadataServer()
     app = web.Application()
     app.add_routes(
@@ -130,7 +130,7 @@ async def test_ec2_instance_metdata_credentials(
     http: HttpImplementation,
     instance_metadata_server: InstanceMetadataServer,
     role: str,
-    model: Type[Union[InstanceMetadataCredentialsV2, InstanceMetadataCredentialsV1]],
+    model: type[InstanceMetadataCredentialsV2 | InstanceMetadataCredentialsV1],
 ) -> None:
     imc = model(
         timeout=0.1,
@@ -156,10 +156,10 @@ async def test_ec2_instance_metdata_credentials(
 async def test_simultaneous_credentials_refresh(
     http: HttpImplementation,
     instance_metadata_server: InstanceMetadataServer,
-    model: Type[Union[InstanceMetadataCredentialsV2, InstanceMetadataCredentialsV1]],
+    model: type[InstanceMetadataCredentialsV2 | InstanceMetadataCredentialsV1],
 ) -> None:
     instance_metadata_server.role = "hoge"
-    now = datetime.datetime(2020, 3, 12, 15, 37, 51, tzinfo=datetime.timezone.utc)
+    now = datetime.datetime(2020, 3, 12, 15, 37, 51, tzinfo=datetime.UTC)
     expires = now + EXPIRES_SOON_THRESHOLD - datetime.timedelta(seconds=10)
     expired = now + EXPIRED_THRESHOLD - datetime.timedelta(seconds=10)
     not_expired = now + datetime.timedelta(days=2)
@@ -271,7 +271,7 @@ async def test_chain_credential_memory() -> None:
         def __init__(self) -> None:
             self.called = 0
 
-        async def get_key(self, http: HttpImplementation) -> Optional[Key]:
+        async def get_key(self, http: HttpImplementation) -> Key | None:
             self.called += 1
             return None
 
@@ -287,7 +287,7 @@ async def test_chain_credential_memory() -> None:
         def __init__(self) -> None:
             self.called = 0
 
-        async def get_key(self, http: HttpImplementation) -> Optional[Key]:
+        async def get_key(self, http: HttpImplementation) -> Key | None:
             self.called += 1
             return key
 
