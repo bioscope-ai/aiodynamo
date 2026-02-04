@@ -1,83 +1,81 @@
-[tool.poetry]
-name = "aiodynamo"
+[project]
+name = "bioscope-aiodynamo"
 version = "24.7"
 description = "Asyncio DynamoDB client"
-authors = ["Jonas Obrist <jonas.obrist@hennge.com>"]
-license = "Apache-2.0"
-repository = "https://github.com/HENNGE/aiodynamo"
-documentation = "https://aiodynamo.readthedocs.io"
+authors = [
+    { name = "Jonas Obrist", email = "jonas.obrist@hennge.com" },
+    { name = "Bioscope", email = "development@bioscope.ai" },
+]
+license = { text = "Apache-2.0" }
+readme = "readme.md"
+requires-python = ">=3.13"
+keywords = ["dynamodb", "asyncio", "aws"]
 classifiers = [
     "Framework :: AsyncIO",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
     "Typing :: Typed",
     "License :: OSI Approved :: Apache Software License",
 ]
-readme = "readme.md"
-homepage = "https://github.com/HENNGE/aiodynamo"
-keywords = ["dynamodb", "asyncio", "aws"]
-
-[tool.poetry.dependencies]
-python = "^3.8"
-httpx = {version = ">=0.15.0 <1.0.0", optional = true}
-aiohttp = {version = "^3.6.2", optional = true}
-yarl = "^1.4.2"
-
-[tool.poetry.extras]
-httpx = ["httpx"]
-aiohttp = ["aiohttp"]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.0"
-pytest-asyncio = "^0.17"
-pytest-cov = "^2.6"
-black = "^22.3"
-sphinx = "^7"
-pyperf = "^2.0"
-boto3 = "^1.12.18"
-freezegun = "^1.0"
-mypy = "^1.5.1"
-pyfakefs = "^5.3.0"
-isort = "^5.8.0"
-types-freezegun = "^1.1.6"
-urllib3 = "< 1.27"
-furo = "^2023.9.10"
-ruff = "^0.0.292"
-httpx = ">=0.15.0 <1.0.0"
-aiohttp = "^3.6.2"
-pytest-xdist = "^3.6.1"
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = "tests"
-
-[tool.isort]
-line_length = "88"
-multi_line_output = "3"
-combine_as_imports = "1"
-include_trailing_comma = "True"
-known_first_party = "aiodynamo"
-
-[tool.mypy]
-strict = true
-files = [
-    "src/",
-    "tests/",
+dependencies = [
+    "yarl>=1.4.2",
 ]
 
-[tool.ruff]
-ignore = [
-    "E722", # Do not use bare `except`
-    "E501", # Line too long (104 > 88 characters)
-]
-select = [
-    "E", "F", "T201",
+[project.urls]
+Homepage = "https://github.com/bioscope-ai/aiodynamo"
+Repository = "https://github.com/bioscope-ai/aiodynamo"
+
+[project.optional-dependencies]
+httpx = ["httpx>=0.15.0,<1.0.0"]
+aiohttp = ["aiohttp>=3.6.2"]
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.29.0",
+    "boto3>=1.12.18",
+    "freezegun>=1.0",
+    "furo>=2023.9.10",
+    "httpx>=0.15.0,<1.0.0",
+    "aiohttp>=3.6.2",
+    "pyfakefs>=5.3.0",
+    "pyperf>=2.0",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=4.0",
+    "pytest-xdist>=3.6.1",
+    "ruff>=0.9.0",
+    "sphinx>=7",
+    "types-freezegun>=1.1.6",
 ]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.9.29,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "aiodynamo"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
+pythonVersion = "3.13"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = [
+    "E501", # Line too long
+    "E722", # Do not use bare `except`
+    "UP046", # Generic class uses `Generic` subclass instead of type parameters
+    "UP047", # Generic function should use type parameters
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["aiodynamo"]

@@ -1,13 +1,14 @@
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Awaitable, Callable, Dict, Literal, Optional, Union
+from typing import Literal
 
 
 @dataclass(frozen=True)
 class Request:
-    method: Union[Literal["GET"], Literal["POST"], Literal["PUT"]]
+    method: Literal["GET"] | Literal["POST"] | Literal["PUT"]
     url: str
-    headers: Optional[Dict[str, str]]
-    body: Optional[bytes]
+    headers: dict[str, str] | None
+    body: bytes | None
 
 
 @dataclass(frozen=True)

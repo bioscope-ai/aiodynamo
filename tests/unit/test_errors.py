@@ -1,6 +1,7 @@
 import json
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, cast
+from typing import Any, cast
 
 import pytest
 from aiohttp import ClientConnectionError, ClientSession

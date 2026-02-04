@@ -1,6 +1,6 @@
 import abc
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 from aiodynamo.errors import EmptyItem
 from aiodynamo.expressions import (
@@ -15,7 +15,7 @@ from aiodynamo.utils import py2dy
 
 class Operation(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def to_request_payload(self) -> Dict[str, Any]:
+    def to_request_payload(self) -> dict[str, Any]:
         pass
 
 
@@ -23,14 +23,14 @@ class Operation(metaclass=abc.ABCMeta):
 class Get(Operation):
     table: TableName
     key: Item
-    projection: Optional[ProjectionExpression] = None
+    projection: ProjectionExpression | None = None
 
-    def to_request_payload(self) -> Dict[str, Any]:
+    def to_request_payload(self) -> dict[str, Any]:
         dynamo_key = py2dy(self.key)
         if not dynamo_key:
             raise EmptyItem()
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "TableName": self.table,
             "Key": dynamo_key,
         }
@@ -47,14 +47,14 @@ class Get(Operation):
 class Put(Operation):
     table: TableName
     item: Item
-    condition: Optional[Condition] = None
+    condition: Condition | None = None
 
-    def to_request_payload(self) -> Dict[str, Any]:
+    def to_request_payload(self) -> dict[str, Any]:
         dynamo_item = py2dy(self.item)
         if not dynamo_item:
             raise EmptyItem()
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "TableName": self.table,
             "Item": dynamo_item,
         }
@@ -71,15 +71,15 @@ class Update(Operation):
     table: TableName
     key: Item
     expression: UpdateExpression
-    condition: Optional[Condition] = None
+    condition: Condition | None = None
 
-    def to_request_payload(self) -> Dict[str, Any]:
+    def to_request_payload(self) -> dict[str, Any]:
         params = Parameters()
         expression = self.expression.encode(params)
         if not expression:
             raise EmptyItem()
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "TableName": self.table,
             "UpdateExpression": expression,
             "Key": py2dy(self.key),
@@ -97,14 +97,14 @@ class Update(Operation):
 class Delete(Operation):
     table: TableName
     key: Item
-    condition: Optional[Condition] = None
+    condition: Condition | None = None
 
-    def to_request_payload(self) -> Dict[str, Any]:
+    def to_request_payload(self) -> dict[str, Any]:
         dynamo_item = py2dy(self.key)
         if not dynamo_item:
             raise EmptyItem()
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "TableName": self.table,
             "Key": dynamo_item,
         }
@@ -120,14 +120,14 @@ class Delete(Operation):
 class ConditionCheck(Operation):
     table: TableName
     key: Item
-    condition: Optional[Condition] = None
+    condition: Condition | None = None
 
-    def to_request_payload(self) -> Dict[str, Any]:
+    def to_request_payload(self) -> dict[str, Any]:
         dynamo_item = py2dy(self.key)
         if not dynamo_item:
             raise EmptyItem()
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "TableName": self.table,
             "Key": dynamo_item,
         }

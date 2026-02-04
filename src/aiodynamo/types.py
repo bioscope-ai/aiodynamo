@@ -1,23 +1,24 @@
 import decimal
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, Dict, List, TypedDict, Union
+from typing import Any, TypedDict
 
-Timeout = Union[float, int]
-Numeric = Union[float, int, decimal.Decimal]
+Timeout = float | int
+Numeric = float | int | decimal.Decimal
 
-Item = Dict[str, Any]
-DynamoItem = Dict[str, Dict[str, Any]]
+Item = dict[str, Any]
+DynamoItem = dict[str, dict[str, Any]]
 TableName = str
 
 
 class ParametersDict(TypedDict, total=False):
-    ExpressionAttributeNames: Dict[str, str]
-    ExpressionAttributeValues: Dict[str, Dict[str, Any]]
+    ExpressionAttributeNames: dict[str, str]
+    ExpressionAttributeValues: dict[str, dict[str, Any]]
 
 
 NOTHING = object()
 
-Seconds = Union[float, int]
+Seconds = float | int
 
 
 class AttributeType(Enum):
@@ -56,12 +57,12 @@ class EncodedProjectionRequired(TypedDict):
 
 
 class EncodedProjection(EncodedProjectionRequired, total=False):
-    NonKeyAttributes: List[str]
+    NonKeyAttributes: list[str]
 
 
 class EncodedLocalSecondaryIndex(TypedDict):
     IndexName: str
-    KeySchema: List[EncodedKeySchema]
+    KeySchema: list[EncodedKeySchema]
     Projection: EncodedProjection
 
 

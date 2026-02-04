@@ -5,19 +5,12 @@ import datetime
 import decimal
 import logging
 from collections import abc as collections_abc
+from collections.abc import Awaitable, Callable, Mapping
 from functools import reduce
 from typing import (
     TYPE_CHECKING,
     Any,
-    Awaitable,
-    Callable,
-    Dict,
-    List,
-    Mapping,
-    Set,
-    Tuple,
     TypeVar,
-    Union,
 )
 
 from .types import DynamoItem, Item, NumericTypeConverter
@@ -32,7 +25,7 @@ request_logger = logging.getLogger("aiodynamo.request")
 response_logger = logging.getLogger("aiodynamo.response")
 
 
-def py2dy(data: Union[Item, None]) -> Union[DynamoItem, None]:
+def py2dy(data: Item | None) -> DynamoItem | None:
     if data is None:
         return data
 
@@ -51,11 +44,11 @@ def deserialize_binary(val: str, _: NumericTypeConverter) -> bytes:
     return base64.b64decode(val)
 
 
-def deserialize_string_set(val: List[str], _: NumericTypeConverter) -> Set[str]:
+def deserialize_string_set(val: list[str], _: NumericTypeConverter) -> set[str]:
     return set(val)
 
 
-def deserialize_binary_set(val: List[str], _: NumericTypeConverter) -> Set[bytes]:
+def deserialize_binary_set(val: list[str], _: NumericTypeConverter) -> set[bytes]:
     return {base64.b64decode(v) for v in val}
 
 
@@ -68,22 +61,22 @@ def deserialize_number(val: str, numeric_type: NumericTypeConverter) -> Any:
 
 
 def deserialize_number_set(
-    val: List[str], numeric_type: NumericTypeConverter
-) -> Set[T]:
+    val: list[str], numeric_type: NumericTypeConverter
+) -> set[T]:
     return {numeric_type(v) for v in val}
 
 
-def deserialize_list(val: List[Any], numeric_type: NumericTypeConverter) -> List[Any]:
+def deserialize_list(val: list[Any], numeric_type: NumericTypeConverter) -> list[Any]:
     return [deserialize(v, numeric_type) for v in val]
 
 
 def deserialize_map(
-    val: Dict[str, Any], numeric_type: NumericTypeConverter
-) -> Dict[str, Any]:
+    val: dict[str, Any], numeric_type: NumericTypeConverter
+) -> dict[str, Any]:
     return {k: deserialize(v, numeric_type) for k, v in val.items()}
 
 
-TAG_DESERIALIZE_MAPPING: Dict[str, Callable[[Any, NumericTypeConverter], Any]] = {
+TAG_DESERIALIZE_MAPPING: dict[str, Callable[[Any, NumericTypeConverter], Any]] = {
     "S": deserialize_simple_types,
     "SS": deserialize_string_set,
     "N": deserialize_number,
@@ -97,10 +90,10 @@ TAG_DESERIALIZE_MAPPING: Dict[str, Callable[[Any, NumericTypeConverter], Any]] =
 }
 
 
-def deserialize(value: Dict[str, Any], numeric_type: NumericTypeConverter) -> Any:
+def deserialize(value: dict[str, Any], numeric_type: NumericTypeConverter) -> Any:
     if not value:
         raise TypeError(
-            "Value must be a nonempty dictionary whose key " "is a valid dynamodb type."
+            "Value must be a nonempty dictionary whose key is a valid dynamodb type."
         )
     tag, val = next(iter(value.items()))
     try:
@@ -112,7 +105,7 @@ def deserialize(value: Dict[str, Any], numeric_type: NumericTypeConverter) -> An
 NUMERIC_TYPES = int, float, decimal.Decimal
 
 
-def serialize(value: Any) -> Dict[str, Any]:
+def serialize(value: Any) -> dict[str, Any]:
     """
     Serialize a Python value to a Dynamo Value, removing empty strings.
     """
@@ -120,7 +113,7 @@ def serialize(value: Any) -> Dict[str, Any]:
     return {tag: value}
 
 
-def low_level_serialize(value: Any) -> Tuple[str, Any]:
+def low_level_serialize(value: Any) -> tuple[str, Any]:
     if value is None:
         return "NULL", True
     elif isinstance(value, bool):
@@ -163,18 +156,18 @@ def low_level_serialize(value: Any) -> Tuple[str, Any]:
         raise TypeError(f"Unsupported type {type(value)}: {value!r}")
 
 
-def serialize_dict(value: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]:
+def serialize_dict(value: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     return {key: serialize(value) for key, value in value.items()}
 
 
 def parse_amazon_timestamp(timestamp: str) -> datetime.datetime:
     return datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ").replace(
-        tzinfo=datetime.timezone.utc
+        tzinfo=datetime.UTC
     )
 
 
 async def wait(
-    config: Union[bool, RetryConfig], check: Callable[[], Awaitable[bool]]
+    config: bool | RetryConfig, check: Callable[[], Awaitable[bool]]
 ) -> bool:
     from .models import RetryConfig, RetryTimeout
 

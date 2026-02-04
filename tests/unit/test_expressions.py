@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -29,7 +29,7 @@ from aiodynamo.expressions import (
     ],
 )
 def test_project(
-    pe: ProjectionExpression, expression: str, names: Dict[str, str]
+    pe: ProjectionExpression, expression: str, names: dict[str, str]
 ) -> None:
     params = Parameters()
     assert pe.encode(params) == expression
@@ -61,7 +61,7 @@ def test_project(
     ],
 )
 def test_update_expression(
-    exp: UpdateExpression, ue: str, ean: Dict[str, str], eav: Dict[str, Dict[str, Any]]
+    exp: UpdateExpression, ue: str, ean: dict[str, str], eav: dict[str, dict[str, Any]]
 ) -> None:
     params = Parameters()
     assert exp.encode(params) == ue
@@ -83,7 +83,7 @@ def test_update_expression(
     ],
 )
 def test_hash_key_encoding(
-    hash_key: HashKey, encoded: str, ean: Dict[str, str], eav: Dict[str, Dict[str, str]]
+    hash_key: HashKey, encoded: str, ean: dict[str, str], eav: dict[str, dict[str, str]]
 ) -> None:
     params = Parameters()
     assert hash_key.encode(params) == encoded

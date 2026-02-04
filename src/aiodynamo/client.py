@@ -2,16 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import AsyncIterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import (
     Any,
-    AsyncIterator,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
     cast,
 )
 
@@ -78,14 +72,14 @@ class TimeToLive:
     table: Table
 
     async def enable(
-        self, attribute: str, *, wait_for_enabled: Union[bool, RetryConfig] = False
+        self, attribute: str, *, wait_for_enabled: bool | RetryConfig = False
     ) -> None:
         await self.table.client.enable_time_to_live(
             self.table.name, attribute, wait_for_enabled=wait_for_enabled
         )
 
     async def disable(
-        self, attribute: str, *, wait_for_disabled: Union[bool, RetryConfig] = False
+        self, attribute: str, *, wait_for_disabled: bool | RetryConfig = False
     ) -> None:
         await self.table.client.disable_time_to_live(
             self.table.name, attribute, wait_for_disabled=wait_for_disabled
@@ -108,10 +102,10 @@ class Table:
         throughput: ThroughputType,
         keys: KeySchema,
         *,
-        lsis: Optional[List[LocalSecondaryIndex]] = None,
-        gsis: Optional[List[GlobalSecondaryIndex]] = None,
-        stream: Optional[StreamSpecification] = None,
-        wait_for_active: Union[bool, RetryConfig] = False,
+        lsis: list[LocalSecondaryIndex] | None = None,
+        gsis: list[GlobalSecondaryIndex] | None = None,
+        stream: StreamSpecification | None = None,
+        wait_for_active: bool | RetryConfig = False,
     ) -> TableDescription:
         return await self.client.create_table(
             self.name,
@@ -130,29 +124,27 @@ class Table:
     async def describe(self) -> TableDescription:
         return await self.client.describe_table(self.name)
 
-    async def delete(
-        self, *, wait_for_disabled: Union[bool, RetryConfig] = False
-    ) -> None:
+    async def delete(self, *, wait_for_disabled: bool | RetryConfig = False) -> None:
         return await self.client.delete_table(
             self.name, wait_for_disabled=wait_for_disabled
         )
 
     async def delete_item(
         self,
-        key: Dict[str, Any],
+        key: dict[str, Any],
         *,
         return_values: ReturnValues = ReturnValues.none,
-        condition: Optional[Condition] = None,
-    ) -> Union[None, Item]:
+        condition: Condition | None = None,
+    ) -> None | Item:
         return await self.client.delete_item(
             self.name, key, return_values=return_values, condition=condition
         )
 
     async def get_item(
         self,
-        key: Dict[str, Any],
+        key: dict[str, Any],
         *,
-        projection: Optional[ProjectionExpression] = None,
+        projection: ProjectionExpression | None = None,
         consistent_read: bool = False,
     ) -> Item:
         """
@@ -166,11 +158,11 @@ class Table:
 
     async def put_item(
         self,
-        item: Dict[str, Any],
+        item: dict[str, Any],
         *,
         return_values: ReturnValues = ReturnValues.none,
-        condition: Optional[Condition] = None,
-    ) -> Union[None, Item]:
+        condition: Condition | None = None,
+    ) -> None | Item:
         """
         Create a new item or replace it if it already exists.
         This will overwrite all attributes in an item.
@@ -183,12 +175,12 @@ class Table:
         self,
         key_condition: KeyCondition,
         *,
-        start_key: Optional[Dict[str, Any]] = None,
-        filter_expression: Optional[Condition] = None,
+        start_key: dict[str, Any] | None = None,
+        filter_expression: Condition | None = None,
         scan_forward: bool = True,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
-        projection: Optional[ProjectionExpression] = None,
+        index: str | None = None,
+        limit: int | None = None,
+        projection: ProjectionExpression | None = None,
         select: Select = Select.all_attributes,
         consistent_read: bool = False,
     ) -> AsyncIterator[Item]:
@@ -220,12 +212,12 @@ class Table:
         self,
         key_condition: KeyCondition,
         *,
-        start_key: Optional[Dict[str, Any]] = None,
-        filter_expression: Optional[Condition] = None,
+        start_key: dict[str, Any] | None = None,
+        filter_expression: Condition | None = None,
         scan_forward: bool = True,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
-        projection: Optional[ProjectionExpression] = None,
+        index: str | None = None,
+        limit: int | None = None,
+        projection: ProjectionExpression | None = None,
         select: Select = Select.all_attributes,
         consistent_read: bool = False,
     ) -> Page:
@@ -249,11 +241,11 @@ class Table:
     def scan(
         self,
         *,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
-        start_key: Optional[Dict[str, Any]] = None,
-        projection: Optional[ProjectionExpression] = None,
-        filter_expression: Optional[Condition] = None,
+        index: str | None = None,
+        limit: int | None = None,
+        start_key: dict[str, Any] | None = None,
+        projection: ProjectionExpression | None = None,
+        filter_expression: Condition | None = None,
         consistent_read: bool = False,
     ) -> AsyncIterator[Item]:
         """
@@ -280,11 +272,11 @@ class Table:
     async def scan_single_page(
         self,
         *,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
-        start_key: Optional[Dict[str, Any]] = None,
-        projection: Optional[ProjectionExpression] = None,
-        filter_expression: Optional[Condition] = None,
+        index: str | None = None,
+        limit: int | None = None,
+        start_key: dict[str, Any] | None = None,
+        projection: ProjectionExpression | None = None,
+        filter_expression: Condition | None = None,
         consistent_read: bool = False,
     ) -> Page:
         """
@@ -305,10 +297,10 @@ class Table:
         self,
         key_condition: KeyCondition,
         *,
-        start_key: Optional[Dict[str, Any]] = None,
-        filter_expression: Optional[Condition] = None,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
+        start_key: dict[str, Any] | None = None,
+        filter_expression: Condition | None = None,
+        index: str | None = None,
+        limit: int | None = None,
         consistent_read: bool = False,
     ) -> int:
         return await self.client.count(
@@ -324,10 +316,10 @@ class Table:
     async def scan_count(
         self,
         *,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
-        start_key: Optional[Dict[str, Any]] = None,
-        filter_expression: Optional[Condition] = None,
+        index: str | None = None,
+        limit: int | None = None,
+        start_key: dict[str, Any] | None = None,
+        filter_expression: Condition | None = None,
         consistent_read: bool = False,
     ) -> int:
         return await self.client.scan_count(
@@ -345,8 +337,8 @@ class Table:
         update_expression: UpdateExpression,
         *,
         return_values: ReturnValues = ReturnValues.none,
-        condition: Optional[Condition] = None,
-    ) -> Union[Item, None]:
+        condition: Condition | None = None,
+    ) -> Item | None:
         """
         Edit an item's attribute or create a new item if it does not exist.
         This will edit only the passed attributes.
@@ -365,7 +357,7 @@ class Client:
     http: HttpImplementation
     credentials: Credentials
     region: str
-    endpoint: Optional[URL] = None
+    endpoint: URL | None = None
     numeric_type: NumericTypeConverter = float
     throttle_config: RetryConfig = RetryConfig.default()
 
@@ -383,13 +375,13 @@ class Client:
     async def create_table(
         self,
         name: TableName,
-        throughput: Union[Throughput, PayPerRequest],
+        throughput: Throughput | PayPerRequest,
         keys: KeySchema,
         *,
-        lsis: Optional[List[LocalSecondaryIndex]] = None,
-        gsis: Optional[List[GlobalSecondaryIndex]] = None,
-        stream: Optional[StreamSpecification] = None,
-        wait_for_active: Union[bool, RetryConfig] = False,
+        lsis: list[LocalSecondaryIndex] | None = None,
+        gsis: list[GlobalSecondaryIndex] | None = None,
+        stream: StreamSpecification | None = None,
+        wait_for_active: bool | RetryConfig = False,
     ) -> TableDescription:
         attributes = keys.to_attributes()
         if lsis is not None:
@@ -402,7 +394,7 @@ class Client:
             {"AttributeName": key, "AttributeType": value}
             for key, value in attributes.items()
         ]
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "AttributeDefinitions": attribute_definitions,
             "TableName": name,
             "KeySchema": keys.encode(),
@@ -439,7 +431,7 @@ class Client:
         table: TableName,
         attribute: str,
         *,
-        wait_for_enabled: Union[bool, RetryConfig] = False,
+        wait_for_enabled: bool | RetryConfig = False,
     ) -> None:
         await self.set_time_to_live(
             table, attribute, True, wait_for_change=wait_for_enabled
@@ -462,7 +454,7 @@ class Client:
         table: TableName,
         attribute: str,
         *,
-        wait_for_disabled: Union[bool, RetryConfig] = False,
+        wait_for_disabled: bool | RetryConfig = False,
     ) -> None:
         await self.set_time_to_live(
             table, attribute, False, wait_for_change=wait_for_disabled
@@ -474,7 +466,7 @@ class Client:
         attribute: str,
         status: bool,
         *,
-        wait_for_change: Union[bool, RetryConfig] = False,
+        wait_for_change: bool | RetryConfig = False,
     ) -> None:
         await self.send_request(
             action="UpdateTimeToLive",
@@ -508,16 +500,16 @@ class Client:
     async def delete_item(
         self,
         table: str,
-        key: Dict[str, Any],
+        key: dict[str, Any],
         *,
         return_values: ReturnValues = ReturnValues.none,
-        condition: Optional[Condition] = None,
-    ) -> Union[None, Item]:
+        condition: Condition | None = None,
+    ) -> None | Item:
         dynamo_key = py2dy(key)
         if not dynamo_key:
             raise EmptyItem()
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "TableName": table,
             "Key": dynamo_key,
             "ReturnValues": return_values.value,
@@ -539,7 +531,7 @@ class Client:
         self,
         table: TableName,
         *,
-        wait_for_disabled: Union[bool, RetryConfig] = False,
+        wait_for_disabled: bool | RetryConfig = False,
     ) -> None:
         await self.send_request(action="DeleteTable", payload={"TableName": table})
 
@@ -556,16 +548,16 @@ class Client:
     async def get_item(
         self,
         table: TableName,
-        key: Dict[str, Any],
+        key: dict[str, Any],
         *,
-        projection: Optional[ProjectionExpression] = None,
+        projection: ProjectionExpression | None = None,
         consistent_read: bool = False,
     ) -> Item:
         dynamo_key = py2dy(key)
         if not dynamo_key:
             raise EmptyItem()
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "TableName": table,
             "Key": dynamo_key,
             "ConsistentRead": consistent_read,
@@ -585,15 +577,15 @@ class Client:
     async def put_item(
         self,
         table: TableName,
-        item: Dict[str, Any],
+        item: dict[str, Any],
         *,
         return_values: ReturnValues = ReturnValues.none,
-        condition: Optional[Condition] = None,
-    ) -> Union[None, Item]:
+        condition: Condition | None = None,
+    ) -> None | Item:
         dynamo_item = py2dy(item)
         if not dynamo_item:
             raise EmptyItem()
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "TableName": table,
             "Item": dynamo_item,
             "ReturnValues": return_values.value,
@@ -616,12 +608,12 @@ class Client:
         table: TableName,
         key_condition: KeyCondition,
         *,
-        start_key: Optional[Dict[str, Any]] = None,
-        filter_expression: Optional[Condition] = None,
+        start_key: dict[str, Any] | None = None,
+        filter_expression: Condition | None = None,
         scan_forward: bool = True,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
-        projection: Optional[ProjectionExpression] = None,
+        index: str | None = None,
+        limit: int | None = None,
+        projection: ProjectionExpression | None = None,
         select: Select = Select.all_attributes,
         consistent_read: bool = False,
     ) -> AsyncIterator[Item]:
@@ -652,12 +644,12 @@ class Client:
         table: TableName,
         key_condition: KeyCondition,
         *,
-        start_key: Optional[Dict[str, Any]] = None,
-        filter_expression: Optional[Condition] = None,
+        start_key: dict[str, Any] | None = None,
+        filter_expression: Condition | None = None,
         scan_forward: bool = True,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
-        projection: Optional[ProjectionExpression] = None,
+        index: str | None = None,
+        limit: int | None = None,
+        projection: ProjectionExpression | None = None,
         select: Select = Select.all_attributes,
         consistent_read: bool = False,
     ) -> Page:
@@ -681,7 +673,7 @@ class Client:
 
         response = await self.send_request(action="Query", payload=payload)
 
-        last_evaluated_key: Optional[Dict[str, Any]]
+        last_evaluated_key: dict[str, Any] | None
         try:
             last_evaluated_key = dy2py(response["LastEvaluatedKey"], self.numeric_type)
         except KeyError:
@@ -696,11 +688,11 @@ class Client:
         self,
         table: TableName,
         *,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
-        start_key: Optional[Dict[str, Any]] = None,
-        projection: Optional[ProjectionExpression] = None,
-        filter_expression: Optional[Condition] = None,
+        index: str | None = None,
+        limit: int | None = None,
+        start_key: dict[str, Any] | None = None,
+        projection: ProjectionExpression | None = None,
+        filter_expression: Condition | None = None,
         consistent_read: bool = False,
     ) -> AsyncIterator[Item]:
         """
@@ -727,11 +719,11 @@ class Client:
         self,
         table: TableName,
         *,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
-        start_key: Optional[Dict[str, Any]] = None,
-        projection: Optional[ProjectionExpression] = None,
-        filter_expression: Optional[Condition] = None,
+        index: str | None = None,
+        limit: int | None = None,
+        start_key: dict[str, Any] | None = None,
+        projection: ProjectionExpression | None = None,
+        filter_expression: Condition | None = None,
         consistent_read: bool = False,
     ) -> Page:
         """
@@ -753,7 +745,7 @@ class Client:
 
         response = await self.send_request(action="Scan", payload=payload)
 
-        last_evaluated_key: Optional[Dict[str, Any]]
+        last_evaluated_key: dict[str, Any] | None
         try:
             last_evaluated_key = dy2py(response["LastEvaluatedKey"], self.numeric_type)
         except KeyError:
@@ -769,15 +761,15 @@ class Client:
         table: TableName,
         key_condition: KeyCondition,
         *,
-        start_key: Optional[Dict[str, Any]] = None,
-        filter_expression: Optional[Condition] = None,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
+        start_key: dict[str, Any] | None = None,
+        filter_expression: Condition | None = None,
+        index: str | None = None,
+        limit: int | None = None,
         consistent_read: bool = False,
     ) -> int:
         params = Parameters()
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "TableName": table,
             "KeyConditionExpression": key_condition.encode(params),
             "Select": Select.count.value,
@@ -801,10 +793,10 @@ class Client:
         self,
         table: TableName,
         *,
-        index: Optional[str] = None,
-        limit: Optional[int] = None,
-        start_key: Optional[Dict[str, Any]] = None,
-        filter_expression: Optional[Condition] = None,
+        index: str | None = None,
+        limit: int | None = None,
+        start_key: dict[str, Any] | None = None,
+        filter_expression: Condition | None = None,
         consistent_read: bool = False,
     ) -> int:
         """
@@ -833,15 +825,15 @@ class Client:
         update_expression: UpdateExpression,
         *,
         return_values: ReturnValues = ReturnValues.none,
-        condition: Optional[Condition] = None,
-    ) -> Union[Item, None]:
+        condition: Condition | None = None,
+    ) -> Item | None:
         params = Parameters()
 
         expression = update_expression.encode(params)
         if not expression:
             raise EmptyItem()
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "TableName": table,
             "Key": py2dy(key),
             "UpdateExpression": expression,
@@ -860,7 +852,7 @@ class Client:
             return None
 
     async def batch_get(
-        self, request: Dict[TableName, BatchGetRequest]
+        self, request: dict[TableName, BatchGetRequest]
     ) -> BatchGetResponse:
         payload = {
             "RequestItems": {
@@ -881,8 +873,8 @@ class Client:
         )
 
     async def batch_write(
-        self, request: Dict[TableName, BatchWriteRequest]
-    ) -> Dict[TableName, BatchWriteResult]:
+        self, request: dict[TableName, BatchWriteRequest]
+    ) -> dict[TableName, BatchWriteResult]:
         payload = {
             "RequestItems": {
                 table_name: write_request.to_request_payload()
@@ -908,9 +900,9 @@ class Client:
 
     async def transact_write_items(
         self,
-        items: Sequence[Union[Put, Update, Delete, ConditionCheck]],
+        items: Sequence[Put | Update | Delete | ConditionCheck],
         *,
-        request_token: Optional[str] = None,
+        request_token: str | None = None,
     ) -> None:
         if len(items) == 0:
             raise TransactionEmpty("TransactWriteItems must have at least 1 operation")
@@ -927,8 +919,8 @@ class Client:
 
     async def transact_get_items(
         self,
-        items: List[Get],
-    ) -> List[Item]:
+        items: list[Get],
+    ) -> list[Item]:
         if len(items) == 0:
             raise TransactionEmpty("TransactGetItems must have at least 1 operation")
         if len(items) > 100:
@@ -950,7 +942,7 @@ class Client:
         *,
         action: str,
         payload: Mapping[str, Any],
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Send a request to DynamoDB and handle retries if necessary.
 
@@ -969,7 +961,7 @@ class Client:
         If the loop never executed, we raise a BrokenThrottleConfig because
         RetryConfig.attempts() should always yield at least once.
         """
-        exception: Optional[Exception] = None
+        exception: Exception | None = None
         try:
             async for _ in self.throttle_config.attempts():
                 key = await self.credentials.get_key(self.http)
@@ -994,7 +986,7 @@ class Client:
                             body=request.body,
                         )
                     )
-                except asyncio.TimeoutError as exc:
+                except TimeoutError as exc:
                     logger.debug("http timeout")
                     exception = exc
                     continue
@@ -1004,7 +996,7 @@ class Client:
                     continue
                 response_logger.debug("got response %r", response)
                 if response.status == 200:
-                    return cast(Dict[str, Any], json.loads(response.body))
+                    return cast(dict[str, Any], json.loads(response.body))
                 exception = exception_from_response(response.status, response.body)
                 if isinstance(exception, Throttled):
                     logger.debug("request throttled")
@@ -1027,15 +1019,15 @@ class Client:
         raise BrokenThrottleConfig()
 
     async def _depaginate(
-        self, action: str, payload: Dict[str, Any], limit: Optional[int] = None
-    ) -> AsyncIterator[Dict[str, Any]]:
+        self, action: str, payload: dict[str, Any], limit: int | None = None
+    ) -> AsyncIterator[dict[str, Any]]:
         """
         Internal API to depaginate the results from query/scan/count.
         Don't call this directly, use .query, .scan or .count instead.
         """
         if limit is not None:
             payload = {**payload, "Limit": limit}
-        task: Optional[asyncio.Task[Dict[str, Any]]] = asyncio.create_task(
+        task: asyncio.Task[dict[str, Any]] | None = asyncio.create_task(
             self.send_request(action=action, payload=payload)
         )
         is_count = payload.get("Select") == "COUNT"
@@ -1074,14 +1066,14 @@ def _query_payload(
     *,
     table: TableName,
     key_condition: KeyCondition,
-    start_key: Optional[Dict[str, Any]],
-    filter_expression: Optional[Condition],
+    start_key: dict[str, Any] | None,
+    filter_expression: Condition | None,
     scan_forward: bool,
-    index: Optional[str],
-    projection: Optional[ProjectionExpression],
+    index: str | None,
+    projection: ProjectionExpression | None,
     select: Select = Select.all_attributes,
     consistent_read: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     if projection:
         select = Select.specific_attributes
     if select is Select.count:
@@ -1089,7 +1081,7 @@ def _query_payload(
 
     params = Parameters()
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "TableName": table,
         "KeyConditionExpression": key_condition.encode(params),
         "ScanIndexForward": scan_forward,
@@ -1116,15 +1108,15 @@ def _query_payload(
 def _scan_payload(
     *,
     table: TableName,
-    index: Optional[str],
-    start_key: Optional[Dict[str, Any]],
-    projection: Optional[ProjectionExpression],
-    filter_expression: Optional[Condition],
+    index: str | None,
+    start_key: dict[str, Any] | None,
+    projection: ProjectionExpression | None,
+    filter_expression: Condition | None,
     consistent_read: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     params = Parameters()
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "TableName": table,
         "ConsistentRead": consistent_read,
     }

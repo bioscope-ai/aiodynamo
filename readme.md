@@ -1,19 +1,24 @@
-# AsyncIO DynamoDB
-
-[![CircleCI](https://circleci.com/gh/HENNGE/aiodynamo.svg?style=svg)](https://circleci.com/gh/HENNGE/aiodynamo)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Documentation Status](https://readthedocs.org/projects/aiodynamo/badge/?version=latest)](https://aiodynamo.readthedocs.io/en/latest/?badge=latest)
+# bioscope-aiodynamo
 
 Asynchronous pythonic DynamoDB client; **2x** faster than `aiobotocore/boto3/botocore`.
+
+## Fork Notice
+
+This is a fork of [HENNGE/aiodynamo](https://github.com/HENNGE/aiodynamo), originally created by Jonas Obrist.
+
+### Changes from upstream
+
+- **Python 3.13+** required (dropped support for 3.8-3.12)
+- **Modernized tooling**: uv, ruff, basedpyright (replaced poetry, black, isort, mypy)
+- **Modern Python syntax**: `X | None` instead of `Optional[X]`, `list[str]` instead of `List[str]`, etc.
 
 ## Quick start
 
 ### With httpx
-Install this library
 
-`pip install "aiodynamo[httpx]"` or, for poetry users `poetry add aiodynamo -E httpx`
-
-Connect to DynamoDB
+```bash
+pip install "bioscope-aiodynamo[httpx]"
+```
 
 ```py
 from aiodynamo.client import Client
@@ -27,11 +32,10 @@ async def main():
 ```
 
 ### With aiohttp
-Install this library
 
-`pip install "aiodynamo[aiohttp]"` or, for poetry users `poetry add aiodynamo -E aiohttp`
-
-Connect to DynamoDB
+```bash
+pip install "bioscope-aiodynamo[aiohttp]"
+```
 
 ```py
 from aiodynamo.client import Client
@@ -74,10 +78,12 @@ async def main(client: Client):
 
 ## Why aiodynamo
 
-* boto3 and botocore are synchronous. aiodynamo is built for **asynchronous** apps.
-* aiodynamo is **fast**. Two times faster than aiobotocore, botocore or boto3 for operations such as query or scan.
-* aiobotocore is very low level. aiodynamo provides a **pythonic API**, using modern Python features. For example, paginated APIs are automatically depaginated using asynchronous iterators.
-* **Legible source code**. botocore and derived libraries generate their interface at runtime, so it cannot be inspected and isn't typed. aiodynamo is hand written code you can read, inspect and understand.
-* **Pluggable HTTP client**. If you're already using an asynchronous HTTP client in your project, you can use it with aiodynamo and don't need to add extra dependencies or run into dependency resolution issues.
+- boto3 and botocore are synchronous. aiodynamo is built for **asynchronous** apps.
+- aiodynamo is **fast**. Two times faster than aiobotocore, botocore or boto3 for operations such as query or scan.
+- aiobotocore is very low level. aiodynamo provides a **pythonic API**, using modern Python features. For example, paginated APIs are automatically depaginated using asynchronous iterators.
+- **Legible source code**. botocore and derived libraries generate their interface at runtime, so it cannot be inspected and isn't typed. aiodynamo is hand written code you can read, inspect and understand.
+- **Pluggable HTTP client**. If you're already using an asynchronous HTTP client in your project, you can use it with aiodynamo and don't need to add extra dependencies or run into dependency resolution issues.
 
-[Complete documentation is here](https://aiodynamo.readthedocs.io/)
+## License
+
+Apache 2.0 - See [LICENSE](LICENSE) for details.
