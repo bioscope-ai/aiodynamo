@@ -687,3 +687,49 @@ class SubConditions:
         yield self.first
         yield self.second
         yield from self.rest
+
+
+# Multi-attribute key support for GSI queries
+
+
+@dataclass(frozen=True)
+class MultiHashKey(KeyCondition):
+    """Multi-attribute partition key condition for GSI queries.
+
+    DynamoDB GSIs support up to 4 partition key attributes. All partition key
+    attributes must be specified with equality conditions.
+
+    Usage:
+        MultiHashKey(("pk1", value1), ("pk2", value2))
+
+    For sort key conditions, use the existing RangeKey class:
+        MultiHashKey(("pk1", v1), ("pk2", v2)) & RangeKey("sk").begins_with("x")
+
+    For multiple sort key conditions, group them with parentheses:
+        MultiHashKey(("pk1", v1), ("pk2", v2)) & (
+            RangeKey("sk1").equals(v1) & RangeKey("sk2").gt(0)
+        )
+    """
+
+    keys: tuple[tuple[str, Any], ...]
+
+    def encode(self, params: Parameters) -> str:
+        parts = [
+            f"{params.encode_path(KeyPath(name))} = {params.encode_value(value)}"
+            for name, value in self.keys
+        ]
+        return " AND ".join(parts)
+
+    def __and__(self, other: Condition) -> KeyCondition:
+        return MultiHashAndRangeKeyCondition(self, other)
+
+
+@dataclass(frozen=True)
+class MultiHashAndRangeKeyCondition(KeyCondition):
+    """Multi-attribute partition key combined with sort key condition(s)."""
+
+    hash_key: MultiHashKey
+    range_key_condition: Condition
+
+    def encode(self, params: Parameters) -> str:
+        return f"{self.hash_key.encode(params)} AND {self.range_key_condition.encode(params)}"

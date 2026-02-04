@@ -1,6 +1,6 @@
 [project]
 name = "bioscope-aiodynamo"
-version = "24.7"
+version = "1.0.0"
 description = "Asyncio DynamoDB client"
 authors = [
     { name = "Jonas Obrist", email = "jonas.obrist@hennge.com" },
@@ -66,6 +66,7 @@ pythonVersion = "3.13"
 [tool.ruff]
 target-version = "py313"
 line-length = 88
+exclude = ["benchmarks", "docs"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]

@@ -15,68 +15,6 @@ wheels = [
 ]
 
 [[package]]
-name = "aiodynamo"
-version = "24.7"
-source = { editable = "." }
-dependencies = [
-    { name = "yarl" },
-]
-
-[package.optional-dependencies]
-aiohttp = [
-    { name = "aiohttp" },
-]
-httpx = [
-    { name = "httpx" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "aiohttp" },
-    { name = "basedpyright" },
-    { name = "boto3" },
-    { name = "freezegun" },
-    { name = "furo" },
-    { name = "httpx" },
-    { name = "pyfakefs" },
-    { name = "pyperf" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-xdist" },
-    { name = "ruff" },
-    { name = "sphinx" },
-    { name = "types-freezegun" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", marker = "extra == 'aiohttp'", specifier = ">=3.6.2" },
-    { name = "httpx", marker = "extra == 'httpx'", specifier = ">=0.15.0,<1.0.0" },
-    { name = "yarl", specifier = ">=1.4.2" },
-]
-provides-extras = ["httpx", "aiohttp"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "aiohttp", specifier = ">=3.6.2" },
-    { name = "basedpyright", specifier = ">=1.29.0" },
-    { name = "boto3", specifier = ">=1.12.18" },
-    { name = "freezegun", specifier = ">=1.0" },
-    { name = "furo", specifier = ">=2023.9.10" },
-    { name = "httpx", specifier = ">=0.15.0,<1.0.0" },
-    { name = "pyfakefs", specifier = ">=5.3.0" },
-    { name = "pyperf", specifier = ">=2.0" },
-    { name = "pytest", specifier = ">=8.0" },
-    { name = "pytest-asyncio", specifier = ">=0.24" },
-    { name = "pytest-cov", specifier = ">=4.0" },
-    { name = "pytest-xdist", specifier = ">=3.6.1" },
-    { name = "ruff", specifier = ">=0.9.0" },
-    { name = "sphinx", specifier = ">=7" },
-    { name = "types-freezegun", specifier = ">=1.1.6" },
-]
-
-[[package]]
 name = "aiohappyeyeballs"
 version = "2.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -227,6 +165,68 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c3/b0/1c6a16426d389813b48d95e26898aff79abbde42ad353958ad95cc8c9b21/beautifulsoup4-4.14.3.tar.gz", hash = "sha256:6292b1c5186d356bba669ef9f7f051757099565ad9ada5dd630bd9de5fa7fb86", size = 627737, upload-time = "2025-11-30T15:08:26.084Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1a/39/47f9197bdd44df24d67ac8893641e16f386c984a0619ef2ee4c51fbbc019/beautifulsoup4-4.14.3-py3-none-any.whl", hash = "sha256:0918bfe44902e6ad8d57732ba310582e98da931428d231a5ecb9e7c703a735bb", size = 107721, upload-time = "2025-11-30T15:08:24.087Z" },
+]
+
+[[package]]
+name = "bioscope-aiodynamo"
+version = "1.0.0"
+source = { editable = "." }
+dependencies = [
+    { name = "yarl" },
+]
+
+[package.optional-dependencies]
+aiohttp = [
+    { name = "aiohttp" },
+]
+httpx = [
+    { name = "httpx" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "aiohttp" },
+    { name = "basedpyright" },
+    { name = "boto3" },
+    { name = "freezegun" },
+    { name = "furo" },
+    { name = "httpx" },
+    { name = "pyfakefs" },
+    { name = "pyperf" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-xdist" },
+    { name = "ruff" },
+    { name = "sphinx" },
+    { name = "types-freezegun" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", marker = "extra == 'aiohttp'", specifier = ">=3.6.2" },
+    { name = "httpx", marker = "extra == 'httpx'", specifier = ">=0.15.0,<1.0.0" },
+    { name = "yarl", specifier = ">=1.4.2" },
+]
+provides-extras = ["httpx", "aiohttp"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "aiohttp", specifier = ">=3.6.2" },
+    { name = "basedpyright", specifier = ">=1.29.0" },
+    { name = "boto3", specifier = ">=1.12.18" },
+    { name = "freezegun", specifier = ">=1.0" },
+    { name = "furo", specifier = ">=2023.9.10" },
+    { name = "httpx", specifier = ">=0.15.0,<1.0.0" },
+    { name = "pyfakefs", specifier = ">=5.3.0" },
+    { name = "pyperf", specifier = ">=2.0" },
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "pytest-asyncio", specifier = ">=0.24" },
+    { name = "pytest-cov", specifier = ">=4.0" },
+    { name = "pytest-xdist", specifier = ">=3.6.1" },
+    { name = "ruff", specifier = ">=0.9.0" },
+    { name = "sphinx", specifier = ">=7" },
+    { name = "types-freezegun", specifier = ">=1.1.6" },
 ]
 
 [[package]]

@@ -84,23 +84,49 @@ class KeySpec:
 
 @dataclass(frozen=True)
 class KeySchema:
-    hash_key: KeySpec
-    range_key: KeySpec | None = None
+    """Key schema supporting single or multi-attribute partition and sort keys.
+
+    For backward compatibility, single KeySpec values are accepted. For multi-attribute
+    keys (GSIs only), pass a tuple of KeySpec values.
+
+    DynamoDB supports up to 4 attributes each for partition (HASH) and sort (RANGE) keys.
+    """
+
+    hash_key: KeySpec | tuple[KeySpec, ...]
+    range_key: KeySpec | tuple[KeySpec, ...] | None = None
+
+    def __post_init__(self) -> None:
+        hash_keys = self._normalize(self.hash_key)
+        if not (1 <= len(hash_keys) <= 4):
+            raise ValueError("hash_key must have 1-4 attributes")
+        if self.range_key:
+            range_keys = self._normalize(self.range_key)
+            if len(range_keys) > 4:
+                raise ValueError("range_key must have 0-4 attributes")
+
+    @staticmethod
+    def _normalize(key: KeySpec | tuple[KeySpec, ...]) -> tuple[KeySpec, ...]:
+        return key if isinstance(key, tuple) else (key,)
 
     def __iter__(self) -> Iterator[KeySpec]:
-        yield self.hash_key
-
+        yield from self._normalize(self.hash_key)
         if self.range_key:
-            yield self.range_key
+            yield from self._normalize(self.range_key)
 
     def to_attributes(self) -> dict[str, str]:
         return {key.name: key.type.value for key in self}
 
     def encode(self) -> list[EncodedKeySchema]:
-        return [
-            {"AttributeName": key.name, "KeyType": key_type}
-            for key, key_type in zip(self, ["HASH", "RANGE"])
+        hash_keys = self._normalize(self.hash_key)
+        result: list[EncodedKeySchema] = [
+            {"AttributeName": k.name, "KeyType": "HASH"} for k in hash_keys
         ]
+        if self.range_key:
+            range_keys = self._normalize(self.range_key)
+            result.extend(
+                {"AttributeName": k.name, "KeyType": "RANGE"} for k in range_keys
+            )
+        return result
 
 
 class ProjectionType(Enum):
@@ -219,14 +245,7 @@ class TableDescription:
             creation_time = None
         key_schema: KeySchema | None
         if attributes and "KeySchema" in description:
-            key_schema = KeySchema(
-                *[
-                    KeySpec(
-                        name=key["AttributeName"], type=attributes[key["AttributeName"]]
-                    )
-                    for key in description["KeySchema"]
-                ]
-            )
+            key_schema = cls._parse_key_schema(description["KeySchema"], attributes)
         else:
             key_schema = None
         throughput: ThroughputType | None
@@ -249,6 +268,32 @@ class TableDescription:
             key_schema=key_schema,
             throughput=throughput,
             status=TableStatus(description["TableStatus"]),
+        )
+
+    @staticmethod
+    def _parse_key_schema(
+        key_schema_list: list[dict[str, str]],
+        attributes: dict[str, KeyType],
+    ) -> KeySchema:
+        """Parse KeySchema from DynamoDB response, handling multi-attribute keys."""
+        hash_keys: list[KeySpec] = []
+        range_keys: list[KeySpec] = []
+
+        for key in key_schema_list:
+            name = key["AttributeName"]
+            spec = KeySpec(name=name, type=attributes[name])
+            if key["KeyType"] == "HASH":
+                hash_keys.append(spec)
+            else:
+                range_keys.append(spec)
+
+        return KeySchema(
+            hash_key=tuple(hash_keys) if len(hash_keys) > 1 else hash_keys[0],
+            range_key=(
+                (tuple(range_keys) if len(range_keys) > 1 else range_keys[0])
+                if range_keys
+                else None
+            ),
         )
 
 
