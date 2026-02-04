@@ -4,6 +4,7 @@ __pycache__
 /dist
 *.swp
 .*
+!.github/
 *.egg-info
 build/
 docs/_build/
