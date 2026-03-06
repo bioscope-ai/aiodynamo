@@ -319,5 +319,48 @@ def test_multi_hash_with_chained_range_conditions() -> None:
     )
     params = Parameters()
     encoded = condition.encode(params)
-    # AndCondition wraps in parentheses, which is fine for DynamoDB
     assert encoded == "#n0 = :v0 AND #n1 = :v1 AND (#n2 = :v2 AND #n3 > :v3)"
+
+
+def test_hash_key_chained_range_without_parens() -> None:
+    """HashKey & RangeKey(...) & RangeKey(...) should work without parentheses."""
+    condition = HashKey("h", "v") & RangeKey("r1").equals("a") & RangeKey("r2").gt(0)
+    params = Parameters()
+    encoded = condition.encode(params)
+    assert encoded == "#n0 = :v0 AND (#n1 = :v1 AND #n2 > :v2)"
+    payload = params.to_request_payload()
+    assert payload["ExpressionAttributeNames"] == {
+        "#n0": "h",
+        "#n1": "r1",
+        "#n2": "r2",
+    }
+    assert payload["ExpressionAttributeValues"] == {
+        ":v0": {"S": "v"},
+        ":v1": {"S": "a"},
+        ":v2": {"N": "0"},
+    }
+
+
+def test_multi_hash_key_chained_range_without_parens() -> None:
+    """MultiHashKey & RangeKey(...) & RangeKey(...) should work without parentheses."""
+    condition = (
+        MultiHashKey((("pk1", "v1"), ("pk2", "v2")))
+        & RangeKey("sk1").equals("a")
+        & RangeKey("sk2").gt(0)
+    )
+    params = Parameters()
+    encoded = condition.encode(params)
+    assert encoded == "#n0 = :v0 AND #n1 = :v1 AND (#n2 = :v2 AND #n3 > :v3)"
+    payload = params.to_request_payload()
+    assert payload["ExpressionAttributeNames"] == {
+        "#n0": "pk1",
+        "#n1": "pk2",
+        "#n2": "sk1",
+        "#n3": "sk2",
+    }
+    assert payload["ExpressionAttributeValues"] == {
+        ":v0": {"S": "v1"},
+        ":v1": {"S": "v2"},
+        ":v2": {"S": "a"},
+        ":v3": {"N": "0"},
+    }

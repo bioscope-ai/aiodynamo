@@ -363,6 +363,9 @@ class HashAndRangeKeyCondition(KeyCondition):
     def encode(self, params: Parameters) -> str:
         return f"{self.hash_key.encode(params)} AND {self.range_key_condition.encode(params)}"
 
+    def __and__(self, other: Condition) -> KeyCondition:
+        return HashAndRangeKeyCondition(self.hash_key, self.range_key_condition & other)
+
 
 class Condition(metaclass=abc.ABCMeta):
     def __and__(self, other: Condition) -> Condition:
@@ -733,3 +736,8 @@ class MultiHashAndRangeKeyCondition(KeyCondition):
 
     def encode(self, params: Parameters) -> str:
         return f"{self.hash_key.encode(params)} AND {self.range_key_condition.encode(params)}"
+
+    def __and__(self, other: Condition) -> KeyCondition:
+        return MultiHashAndRangeKeyCondition(
+            self.hash_key, self.range_key_condition & other
+        )
