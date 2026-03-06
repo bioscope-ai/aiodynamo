@@ -1,6 +1,6 @@
 [project]
 name = "bioscope-aiodynamo"
-version = "1.0.0"
+version = "1.0.1"
 description = "Asyncio DynamoDB client"
 authors = [
     { name = "Jonas Obrist", email = "jonas.obrist@hennge.com" },
